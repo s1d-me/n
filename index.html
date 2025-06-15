@@ -52,7 +52,6 @@
         /* --- Global & Layout --- */
         body::before { 
             content: ''; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            /* Optimized: Replaced Base64 PNG with a more performant and scalable CSS gradient */
             background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
             background-size: 16px 16px;
             pointer-events: none; z-index: -1; 
@@ -63,6 +62,21 @@
         ::-webkit-scrollbar-thumb:hover { background-color: #52525b; }
         aside { overflow-x: hidden; }
 
+        /* --- Keyboard Navigation & Focus --- */
+        :focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+        .panel:focus-visible, button:focus-visible, a:focus-visible {
+            box-shadow: 0 0 0 2px #18181b, 0 0 0 4px #60a5fa;
+        }
+        #zoom-in:focus-visible, #zoom-out:focus-visible { box-shadow: 0 0 0 2px #60a5fa; }
+        .panel a:focus-visible {
+             box-shadow: inset 0 0 0 2px #60a5fa;
+             outline: none; /* Use inset shadow instead of outline for these links */
+        }
+        
         /* --- Animated Panels --- */
         @keyframes glow-rotation { 0% { background-position: 50% 0%; } 12.5% { background-position: 100% 0%; } 25% { background-position: 100% 50%; } 37.5% { background-position: 100% 100%; } 50% { background-position: 50% 100%; } 62.5% { background-position: 0% 100%; } 75% { background-position: 0% 50%; } 87.5% { background-position: 0% 0%; } 100% { background-position: 50% 0%; } }
         .panel.animated-border { border-image-slice: 1; border-image-source: conic-gradient(from var(--gradient-angle), transparent 50%, var(--border-color, #fff), transparent); }
@@ -71,16 +85,20 @@
         .panel-red { --border-color: rgba(239, 68, 68, 1); } .panel-red::before { background-image: radial-gradient(circle, rgba(239, 68, 68, 0.6) 0%, transparent 50%); }
         .panel-lime { --border-color: rgba(132, 204, 22, 1); } .panel-lime::before { background-image: radial-gradient(circle, rgba(132, 204, 22, 0.6) 0%, transparent 50%); }
         
-        /* Improved: Smoother transitions for panel active state */
-        .panel .panel-main-content { transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; }
-        .panel .panel-hover-content { transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out; }
-
-        .panel.panel-active .panel-hover-content, .group:hover .panel-hover-content { opacity: 1; transform: scale(1); pointer-events: auto; }
-        .panel.panel-active .panel-main-content, .group:hover .panel-main-content { opacity: 0; transform: scale(0.95); pointer-events: none; }
-        /* Hide hover effect on desktop when panel is active from a click */
-        @media (hover: hover) and (min-width: 1024px) { 
-            .panel.panel-active .panel-hover-content { opacity: 0; transform: scale(0.9); pointer-events: none; } 
-            .panel.panel-active .panel-main-content { opacity: 1; transform: scale(1); pointer-events: auto; } 
+        /* Improved: Smoother transitions and added focus-within for keyboard nav */
+        .panel .panel-main-content, .panel .panel-hover-content { 
+            transition: opacity 0.4s cubic-bezier(0.25, 1, 0.5, 1), transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+        }
+        
+        /* JS-driven class for click/tap interaction */
+        .panel.panel-active .panel-hover-content, 
+        /* CSS-driven for hover and keyboard focus (works without JS) */
+        .group:hover .panel-hover-content, .group:focus-within .panel-hover-content { 
+            opacity: 1; transform: scale(1); pointer-events: auto; 
+        }
+        .panel.panel-active .panel-main-content, 
+        .group:hover .panel-main-content, .group:focus-within .panel-main-content { 
+            opacity: 0; transform: scale(0.95); pointer-events: none; 
         }
 
         /* --- Passport Card --- */
@@ -99,19 +117,20 @@
         .passport-card::before { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; z-index: 10; }
         .passport-card::after { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; z-index: 10; }
         .passport-card:hover::before, .passport-card:hover::after { border-color: #60a5fa; }
-        /* Improved: Added inset shadow for depth */
         .passport-photo-box { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3), inset 0 0 10px rgba(59, 130, 246, 0.2); }
         .passport-watermark { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 6rem; font-weight: bold; color: rgba(161, 161, 170, 0.05); pointer-events: none; z-index: 0; font-family: 'Space Mono', monospace; }
         .passport-hologram { position: absolute; bottom: 40px; right: 15px; width: 50px; height: 50px; background-image: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.2), transparent 50%); background-size: 300% 100%; opacity: 0.7; border-radius: 50%; z-index: 1; animation: hologram-shine 8s linear infinite; -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2h10a2 2 0 002-2v-1a2 2 0 012-2h1.945M7.707 4.293l.94-1.591a.5.5 0 01.894 0l.94 1.591M12 21a9 9 0 100-18 9 9 0 000 18z" /></svg>'); mask-size: contain; mask-repeat: no-repeat; mask-position: center; }
         .digital-stamp { font-family: 'Space Mono', monospace; font-weight: bold; color: rgba(59, 130, 246, 0.6); border: 2px solid rgba(59, 130, 246, 0.6); padding: 2px 8px; border-radius: 4px; transform: rotate(-10deg) translateY(5px); font-size: 12px; }
         .fake-barcode { width: 64px; height: 20px; background: repeating-linear-gradient(to right, #e5e7eb, #e5e7eb 2px, transparent 2px, transparent 4px, #e5e7eb 4px, #e5e7eb 5px, transparent 5px, transparent 8px, #e5e7eb 8px, #e5e7eb 10px, transparent 10px, transparent 11px, #e5e7eb 11px, #e5e7eb 12px, transparent 12px, transparent 15px); opacity: 0.8; }
-        /* Improved: more realistic letter spacing for MRZ */
         .mrz-zone { font-family: 'Space Mono', monospace; letter-spacing: 3px; word-break: break-all; line-height: 1.4; position: relative; z-index: 2; }
-
+        
         /* --- D3 Interactive Graph --- */
-        .interactive-graph { width: 100%; aspect-ratio: 1.1; background-color: transparent; overflow: hidden; border-radius: 4px; }
+        .interactive-graph { width: 100%; aspect-ratio: 1.1; background-color: transparent; overflow: hidden; border-radius: 4px; position: relative; }
         .graph-label { font-size: 11px; text-anchor: middle; pointer-events: none; font-family: 'Space Mono', monospace; fill: #e5e7eb; user-select: none; transition: opacity 0.3s; text-shadow: 0 0 5px rgba(0,0,0,0.9); }
         .leaf-label { opacity: 0; }
+        
+        /* --- Non-JS Fallbacks --- */
+        noscript .no-js-message { display: flex; align-items: center; justify-content: center; text-align: center; height: 100%; color: #a1a1aa; font-size: 0.875rem; }
     </style>
 </head>
 <body class="bg-black text-gray-200 min-h-screen font-mono relative z-0">
@@ -123,79 +142,86 @@
             </div>
             <div class="z-10 w-full flex flex-col items-center">
                 <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8 lg:gap-16 lg:mt-24">
-                    <div class="group panel animated-border panel-blue animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer">
+                    <div class="group panel animated-border panel-blue animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
                         <div class="panel-main-content text-center">
                             <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-blue-500">about</span>]</h2>
                         </div>
                         <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
-                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 focus-visible:bg-blue-500/30 outline-none"><span class="relative z-20">what</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 focus-visible:bg-blue-500/30 outline-none"><span class="relative z-20">why</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 focus-visible:bg-blue-500/30 outline-none"><span class="relative z-20">how</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 focus-visible:bg-blue-500/30 outline-none"><span class="relative z-20">me</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">what</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">why</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">how</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-blue-500 border border-blue-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-blue-500/30 outline-none"><span class="relative z-20">me</span></a>
                         </div>
                     </div>
-                    <div class="group panel animated-border panel-red animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer">
+                    <div class="group panel animated-border panel-red animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
                          <div class="panel-main-content text-center">
                             <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-red-500">panel</span>]</h2>
                         </div>
                         <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
-                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 focus-visible:bg-red-500/30 outline-none"><span class="relative z-20">shortn</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 focus-visible:bg-red-500/30 outline-none"><span class="relative z-20">paste</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 focus-visible:bg-red-500/30 outline-none"><span class="relative z-20">image</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 focus-visible:bg-red-500/30 outline-none"><span class="relative z-20">misc</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">shortn</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">paste</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">image</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-red-500 border border-red-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-red-500/30 outline-none"><span class="relative z-20">misc</span></a>
                         </div>
                     </div>
                     <div class="lg:h-72 flex flex-col items-center justify-center space-y-4 p-6 text-center order-first lg:order-none lg:border lg:border-zinc-700" style="background: linear-gradient(to bottom, rgba(10, 10, 10, 0.7), transparent);">
                         <h1 class="lg:hidden text-white font-bold animate-pulse-glow text-8xl leading-none mb-4">s1d</h1>
                         <p class="text-xl md:text-2xl italic">play-ground of the <span class="underline">internet</span></p>
                         <p class="text-lg md:text-xl">one thing at a time</p>
-                        <button class="mt-4 px-10 py-3 text-white border-2 border-white transition-all duration-300 hover:bg-white hover:text-black hover:scale-105 focus:outline-none focus-visible:bg-white focus-visible:text-black">start</button>
+                        <button class="mt-4 px-10 py-3 text-white border-2 border-white transition-all duration-300 hover:bg-white hover:text-black hover:scale-105 focus:outline-none">start</button>
                     </div>
-                    <div class="group panel animated-border panel-lime animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer">
+                    <div class="group panel animated-border panel-lime animate-border-rotation relative flex items-center justify-center p-2 h-44 sm:h-56 lg:h-72 border-2 border-transparent text-zinc-600 transition-transform duration-500 ease-in-out hover:scale-[1.03] overflow-hidden cursor-pointer" tabindex="0" role="button" aria-expanded="false">
                         <div class="panel-main-content text-center">
                             <h2 class="font-lxgw font-bold text-4xl sm:text-5xl md:text-6xl">[<span class="text-lime-500">contact</span>]</h2>
                         </div>
                         <div class="panel-hover-content absolute inset-0 grid grid-cols-2 grid-rows-2 opacity-0 scale-90 pointer-events-none">
-                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 focus-visible:bg-lime-500/30 outline-none"><span class="relative z-20">us</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 focus-visible:bg-lime-500/30 outline-none"><span class="relative z-20">him</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 focus-visible:bg-lime-500/30 outline-none"><span class="relative z-20">legal</span></a>
-                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 focus-visible:bg-lime-500/30 outline-none"><span class="relative z-20">help</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">us</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">him</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">legal</span></a>
+                            <a href="#" class="flex items-center justify-center no-underline text-lime-500 border border-lime-500/50 bg-[rgba(10,10,10,0.2)] backdrop-blur-sm transition-colors duration-200 text-2xl font-comic hover:bg-lime-500/30 outline-none"><span class="relative z-20">help</span></a>
                         </div>
                     </div>
                 </div>
-                <div class="mt-12 flex flex-wrap justify-center gap-4">
-                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-2 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white">Privacy Policy</a>
-                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-2 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white">Terms of Service</a>
-                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-2 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white">API Docs</a>
-                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-2 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white">Donate</a>
+                <div class="mt-12 flex flex-wrap justify-center gap-x-6 gap-y-4">
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Privacy Policy</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Terms of Service</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">API Docs</a>
+                    <a href="#" class="text-zinc-400 uppercase tracking-wider text-sm p-1 no-underline border-b border-transparent transition-colors duration-200 ease-in-out hover:text-white hover:border-white focus:outline-none">Donate</a>
                 </div>
             </div>
         </main>
 
         <aside class="bg-gradient-to-br from-zinc-900 via-[#18181b] to-[#18181b] p-6 md:p-8 border-l border-zinc-800 lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto">
-            <div class="mb-8 pb-4 border-b border-zinc-800">
+            <header class="mb-8 pb-4 border-b border-zinc-800">
                 <h2 class="font-mono font-bold text-3xl text-white tracking-[0.2em]">s1d-ebar</h2>
                 <p class="text-xs text-zinc-400 mt-1">Real-time Playground & Stats</p>
-            </div>
+            </header>
             
-            <!-- Improved: Sidebar sections are now self-contained cards for better organization -->
+            <noscript>
+                <div class="bg-yellow-900/50 border border-yellow-700 rounded-lg p-4 text-yellow-200 text-sm">
+                    <p class="font-bold mb-2">JavaScript Disabled</p>
+                    <p>The real-time stats and interactive elements on this sidebar require JavaScript to function. Please enable it for the full experience.</p>
+                </div>
+            </noscript>
+
             <div class="flex flex-col space-y-8">
                 
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="about-s1d">
+                    <h3 id="about-s1d" class="sr-only">About s1d</h3>
                     <p class="text-sm text-gray-300 leading-relaxed">s1d is essentially a link shortener on steroids. We track user analytics on cookie approval (see ToS). APIs are available for business purposes - contact us for more info.</p>
-                </div>
+                </section>
 
                 <!-- PASSPORT CARD -->
-                <div class="passport-card p-4 relative">
+                <section class="passport-card p-4 relative" aria-labelledby="passport-heading">
                     <div class="passport-watermark">s1d</div>
                     <div class="passport-hologram animate-hologram-shine"></div>
                     
                     <div class="flex justify-between items-center pb-2 border-b border-zinc-700/50 relative z-10">
-                        <h3 class="font-bold text-white text-lg tracking-wider">NETIZEN PASSPORT</h3>
+                        <h3 id="passport-heading" class="font-bold text-white text-lg tracking-wider">NETIZEN PASSPORT</h3>
                         <p class="text-xs text-lime-400">Status: <span class="font-bold">ACTIVE</span></p>
                     </div>
 
-                    <div class="flex space-x-3 mt-3 relative z-10">
+                    <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 mt-3 relative z-10">
                         <div class="flex flex-col items-center space-y-2 shrink-0">
                             <div class="passport-photo-box w-16 h-20 bg-blue-500/20 border-2 border-blue-400 flex items-center justify-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -206,9 +232,9 @@
                         <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs flex-grow">
                             <div><span class="text-zinc-500 block text-[10px] uppercase">Surname</span><span class="font-semibold text-zinc-200">User</span></div>
                             <div><span class="text-zinc-500 block text-[10px] uppercase">Given Name</span><span class="font-semibold text-zinc-200">Guest</span></div>
-                            <div class="col-span-2"><span class="text-zinc-500 block text-[10px] uppercase">Passport ID</span><span id="passport-id" class="text-blue-300 font-semibold tracking-wider text-[11px] break-all">...</span></div>
-                            <div><span class="text-zinc-500 block text-[10px] uppercase">Issued</span><span id="passport-issued" class="text-zinc-300">...</span></div>
-                            <div><span class="text-zinc-500 block text-[10px] uppercase">Expires</span><span id="passport-expires" class="text-zinc-300">...</span></div>
+                            <div class="col-span-2"><span class="text-zinc-500 block text-[10px] uppercase">Passport ID</span><span id="passport-id" class="text-blue-300 font-semibold tracking-wider text-[11px] break-all">LOADING...</span></div>
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Issued</span><span id="passport-issued" class="text-zinc-300">YYYY-MM-DD</span></div>
+                            <div><span class="text-zinc-500 block text-[10px] uppercase">Expires</span><span id="passport-expires" class="text-zinc-300">YYYY-MM-DD</span></div>
                             <div class="col-span-2"><span class="text-zinc-500 block text-[10px] uppercase">Authority</span><span class="text-zinc-300">s1d.me/SYS_ADMIN</span></div>
                         </div>
                     </div>
@@ -225,69 +251,73 @@
                         <p id="mrz-line1">P<GUEST<<USER<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<</p>
                         <p id="mrz-line2">IDGUESTUSER-SESSION-ID<<<<<<<<<<<<<7</p>
                     </div>
-                </div>
+                </section>
                 
                 <!-- SITE GRAPH -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Site Graph</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="graph-heading">
+                    <h3 id="graph-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Site Graph</h3>
                     <div id="interactive-graph-container" class="relative">
-                        <div class="interactive-graph" id="interactive-graph"></div>
+                        <div class="interactive-graph" id="interactive-graph">
+                             <noscript><div class="no-js-message">Interactive graph requires JavaScript.</div></noscript>
+                        </div>
                         <div class="absolute top-0 right-0 flex flex-col space-y-1 z-10">
-                            <button id="zoom-in" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">+</button>
-                            <button id="zoom-out" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none">-</button>
+                            <button id="zoom-in" aria-label="Zoom In" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus:outline-none">+</button>
+                            <button id="zoom-out" aria-label="Zoom Out" class="w-7 h-7 bg-zinc-700/80 hover:bg-zinc-600 rounded-md text-zinc-200 text-lg leading-none transition-colors focus:outline-none">-</button>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <!-- SERVER STATUS -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Status</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="status-heading">
+                    <h3 id="status-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Status</h3>
                     <div class="bg-zinc-900/50 p-3 rounded-md">
-                        <div class="flex gap-px" id="server-status-bar"></div>
+                        <div class="flex gap-px" id="server-status-bar">
+                            <div class="h-6 flex-1 bg-zinc-700 animate-pulse"></div>
+                        </div>
                         <div class="flex justify-between text-[10px] text-zinc-500 mt-1">
                             <span>90 days ago</span>
                             <span>Today</span>
                         </div>
                     </div>
-                </div>
+                </section>
                 
                 <!-- SERVER LOAD -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Load</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="load-heading">
+                    <h3 id="load-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Server Load</h3>
                     <div class="bg-zinc-900/70 p-4 rounded-md">
-                        <div id="server-load-graph-container" class="w-full h-40"></div>
+                        <div id="server-load-graph-container" class="w-full h-40 flex items-center justify-center text-zinc-500 text-sm"><p>Loading graph...</p></div>
                         <div id="server-load-legend" class="flex flex-wrap gap-x-4 gap-y-1 justify-center text-xs mt-3"></div>
                     </div>
-                </div>
+                </section>
 
                 <!-- STATS -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Random Stats</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="stats-heading">
+                    <h3 id="stats-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Random Stats</h3>
                     <div class="grid grid-cols-2 gap-4 text-center">
                         <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Links Active</p><p id="stat-links" class="text-xl text-white font-bold">14,831</p></div>
                         <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Total Clicks</p><p id="stat-clicks" class="text-xl text-white font-bold">983,102</p></div>
                         <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">Users Online</p><p id="stat-users" class="text-xl text-white font-bold">2,415</p></div>
                         <div class="bg-zinc-900/50 p-3 rounded-md"><p class="text-xs text-zinc-400">API Calls</p><p id="stat-api" class="text-xl text-white font-bold">1,732,842</p></div>
                     </div>
-                </div>
+                </section>
                 
                 <!-- BULLETIN -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-3">Playground Bulletin</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="bulletin-heading">
+                    <h3 id="bulletin-heading" class="text-sm font-bold text-white uppercase tracking-wider mb-3">Playground Bulletin</h3>
                     <div class="bg-zinc-900/50 p-4 space-y-3 text-xs text-zinc-300 rounded-md">
                         <p><span class="text-lime-400">[Update]</span> New API endpoints for enterprise users now live.</p>
                         <p><span class="text-yellow-400">[Notice]</span> Scheduled maintenance on Dec 25th, 02:00 UTC.</p>
                         <p><span class="text-blue-400">[Info]</span> Welcome to the new s1d playground! Explore and have fun.</p>
                     </div>
-                </div>
+                </section>
                 
                 <!-- USER INFO -->
-                <div class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4">
-                    <h3 class="text-xs italic text-gray-400 mb-3">i thought it would be funny to have more information about you here</h3>
+                <section class="bg-zinc-900/50 border border-zinc-800 rounded-lg p-4" aria-labelledby="userinfo-heading">
+                    <h3 id="userinfo-heading" class="text-xs italic text-gray-400 mb-3">i thought it would be funny to have more information about you here</h3>
                     <div id="user-info-container" class="text-xs break-words space-y-2 pt-3 border-t border-gray-700 text-gray-400">
                         <p>Gathering session data...</p>
                     </div>
-                </div>
+                </section>
             </div>
         </aside>
     </div>
@@ -296,25 +326,43 @@
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- INTERACTIVE PANEL LOGIC ---
-            // Handles the click-to-open behavior for the main content panels.
             const panels = document.querySelectorAll('.panel'); 
-            const closeAllPanels = () => panels.forEach(p => p.classList.remove('panel-active'));
+            const closeAllPanels = (exceptThisPanel = null) => {
+                panels.forEach(p => {
+                    if (p !== exceptThisPanel) {
+                        p.classList.remove('panel-active');
+                        p.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            };
             
             panels.forEach(panel => {
-                panel.addEventListener('click', (e) => {
+                const handleClick = (e) => {
                     // Don't interfere with clicks on the actual links inside
                     if (e.target.closest('a')) return;
                     
                     const wasActive = panel.classList.contains('panel-active');
-                    closeAllPanels(); 
+                    closeAllPanels(panel); 
                     if (!wasActive) {
                         panel.classList.add('panel-active');
+                        panel.setAttribute('aria-expanded', 'true');
+                    } else {
+                        panel.classList.remove('panel-active');
+                        panel.setAttribute('aria-expanded', 'false');
                     }
                     e.stopPropagation();
+                };
+
+                panel.addEventListener('click', handleClick);
+                // Allow Enter/Space key to toggle the panel for accessibility
+                panel.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleClick(e);
+                    }
                 });
             });
             
-            // Close panels if clicking anywhere else on the document
             document.addEventListener('click', (e) => { 
                 if (!e.target.closest('.panel')) {
                     closeAllPanels();
@@ -322,7 +370,6 @@
             });
 
             // --- USER & PASSPORT INFO ---
-            // Fetches user data and populates the Passport and User Info cards.
             const displayUserInfo = () => {
                 const container = document.getElementById("user-info-container");
                 const passportIdEl = document.getElementById("passport-id");
@@ -343,15 +390,10 @@
                 const padString = (str, len) => (str + '<'.repeat(len)).slice(0, len);
 
                 const generateMRZ = (id) => {
-                    // Generates fake Machine Readable Zone text for the passport
-                    // P< - Passport, NET - Fictional "Netizen" country code
-                    // GUEST<<USER - Surname and Given Name, padded with '<'
-                    const line1 = padString('P<NET<GUEST<<USER', 44);
-                    
-                    // ID + DOB + Gender + Expiry + Check Digits
+                    const line1 = padString('P<NETGUEST<<USER', 44);
                     const idPart = padString(id.replace(/[\.\-]/g, '').slice(0, 15), 23);
-                    const dob = '850101'; // Fake DOB YYMMDD
-                    const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(2, 10).replace(/-/g, '').slice(0, 6); // YYMMDD
+                    const dob = '850101';
+                    const expiry = new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString().slice(2, 10).replace(/-/g, '').slice(0, 6);
                     const line2 = padString(`${idPart}<${dob}8M${expiry}3<<<<<<<<<<<`, 43) + '8';
 
                     if (mrzLine1El) mrzLine1El.textContent = line1;
@@ -372,7 +414,8 @@
                         generateMRZ(data.ip);
                     })
                     .catch(() => {
-                        addInfo('IPv4', 'Unavailable');
+                        const unavailableMsg = 'Unavailable';
+                        addInfo('IPv4', unavailableMsg);
                         if (passportIdEl) passportIdEl.textContent = "REDACTED";
                         generateMRZ("REDACTED");
                     });
@@ -387,13 +430,12 @@
                 }
                 if (passportExpiresEl) {
                     const expiryDate = new Date();
-                    expiryDate.setMonth(expiryDate.getMonth() + 6); // Session expires in 6 months
+                    expiryDate.setMonth(expiryDate.getMonth() + 6);
                     passportExpiresEl.textContent = expiryDate.toLocaleDateString('en-CA');
                 }
             };
             
             // --- SERVER STATUS BAR ---
-            // Generates a random 90-day uptime status bar.
             const generateServerStatusBar = () => {
                 const statusBar = document.getElementById("server-status-bar");
                 if (!statusBar) return;
@@ -404,7 +446,7 @@
                 
                 for (let i = 0; i < 90; i++) {
                     const day = document.createElement("div");
-                    day.className = "h-6 flex-1";
+                    day.className = "h-6 flex-1 transition-colors duration-200";
                     
                     let rand = Math.random();
                     let statusKey = rand > 0.98 ? 'outage' : (rand > 0.95 ? 'degraded' : 'operational');
@@ -416,7 +458,6 @@
             };
             
             // --- SERVER LOAD GRAPH ---
-            // Renders and periodically updates the stacked area chart for server load.
             const updateServerLoadGraph = () => {
                 const container = document.getElementById('server-load-graph-container');
                 const legendContainer = document.getElementById('server-load-legend');
@@ -445,15 +486,14 @@
                 let gridLines = '';
                 for (let i = 0; i <= 4; i++) {
                     const y = height - (i * (height / 4));
-                    gridLines += `<line x1="30" y1="${y}" x2="${width}" y2="${y}" stroke="#3f3f46" stroke-width="0.5"/><text x="0" y="${y+3}" fill="#a1a1aa" font-size="10">${i * 100}%</text>`;
+                    gridLines += `<line x1="30" y1="${y}" x2="${width}" y2="${y}" stroke="#3f3f46" stroke-width="0.5"/><text x="0" y="${y+3}" fill="#a1a1aa" font-size="10">${i * 25}%</text>`;
                 }
                 
-                container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="w-full h-full"><g>${gridLines}</g>${cores.map((core, i) => `<path d="${pathStrings[cores.length - 1 - i]}" fill="${cores[cores.length - 1 - i].color}" />`).join('')}</svg>`;
+                container.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" class="w-full h-full"><g>${gridLines}</g>${cores.map((core, i) => `<path d="${pathStrings[cores.length - 1 - i]}" fill="${cores[cores.length - 1 - i].color}" style="transition: d 0.5s ease-in-out;" />`).join('')}</svg>`;
                 legendContainer.innerHTML = cores.map(core => `<div class="flex items-center space-x-2"><div class="w-3 h-3 rounded-sm" style="background-color: ${core.color};"></div><span>${core.name}</span></div>`).join('');
             };
 
             // --- RANDOM STATS UPDATER ---
-            // Periodically increments the "Random Stats" values.
             const updateStats = () => {
                 const increments = { 
                     "stat-links": 1, 
@@ -471,7 +511,6 @@
             };
             
             // --- D3 SITE GRAPH ---
-            // Initializes the interactive D3.js force-directed graph.
             const createInteractiveGraph = () => {
                 const graphElement = document.getElementById("interactive-graph");
                 if (!graphElement) return;
@@ -502,8 +541,9 @@
                     graphElement.innerHTML = ''; 
 
                     svg = d3.select(graphElement).append("svg")
-                        .attr("width", width).attr("height", height)
-                        .attr("viewBox", `0 0 ${width} ${height}`);
+                        .attr("width", "100%").attr("height", "100%")
+                        .attr("viewBox", `0 0 ${width} ${height}`)
+                        .style("display", "block");
 
                     g = svg.append("g");
 
@@ -562,14 +602,14 @@
                 d3.select("#zoom-out").on("click", () => svg.transition().duration(250).call(zoom.scaleBy, 1 / 1.3));
 
                 initGraph();
-                window.addEventListener("resize", () => { // Debounce resize for performance
-                    clearTimeout(window.resizeTimer);
-                    window.resizeTimer = setTimeout(initGraph, 250);
+                let resizeTimer;
+                window.addEventListener("resize", () => {
+                    clearTimeout(resizeTimer);
+                    resizeTimer = setTimeout(initGraph, 250);
                 });
             };
 
             // --- INITIALIZATION ---
-            // Call all setup functions and start timers.
             displayUserInfo();
             generateServerStatusBar();
             updateServerLoadGraph();
